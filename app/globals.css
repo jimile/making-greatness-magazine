@@ -171,18 +171,41 @@ body {
 .book-cover {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, #f7f4ec, #ede8da);
-  border: 1px solid #d6d1c4;
+  background: linear-gradient(135deg, #2a2a2c, #1a1a1c);
+  border: 2px solid #0a0a0a;
   border-radius: 18px;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
+  justify-content: center;
   padding: 24px;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6), 0 28px 46px -32px rgba(0, 0, 0, 0.45), 0 18px 24px -26px rgba(0, 0, 0, 0.5);
+  box-shadow:
+    inset 0 2px 4px rgba(255, 255, 255, 0.1),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.5),
+    0 28px 46px -32px rgba(0, 0, 0, 0.7),
+    0 18px 24px -26px rgba(0, 0, 0, 0.6);
   transform-origin: left center;
   transform: rotateY(0deg) translateZ(2px);
   transition: transform 900ms cubic-bezier(0.77, 0, 0.175, 1), box-shadow 900ms;
   cursor: pointer;
   z-index: 10;
+}
+
+/* Book binding/spine on cover */
+.book-cover::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: -2px;
+  bottom: -2px;
+  width: 40px;
+  background: linear-gradient(90deg,
+    #1a1a1c 0%,
+    #2a2a2c 20%,
+    #3a3a3c 50%,
+    #2a2a2c 80%,
+    #1a1a1c 100%);
+  border-radius: 18px 0 0 18px;
+  box-shadow: inset 2px 0 4px rgba(0, 0, 0, 0.5);
 }
 
 .book-viewport[data-open="true"] .book-cover {
@@ -194,21 +217,26 @@ body {
 .cover-title {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  color: #1f1f21;
+  gap: 12px;
+  color: #ffffff;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.12em;
   font-weight: 600;
+  text-align: center;
+  z-index: 1;
+  position: relative;
 }
 
 .cover-name {
-  font-size: 1.2rem;
-  letter-spacing: 0.04em;
+  font-size: 1.4rem;
+  letter-spacing: 0.06em;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
 }
 
 .cover-tag {
-  font-size: 0.75rem;
-  color: #5c5c60;
+  font-size: 0.85rem;
+  color: #a8a8a8;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
 }
 
 .page-turner {
@@ -310,4 +338,107 @@ body {
   font-size: 0.75rem;
   letter-spacing: 0.08em;
   color: #555;
+}
+
+/* Page edges styles */
+.page-edges {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  transform-style: preserve-3d;
+  pointer-events: none;
+  z-index: 1;
+  transition: width 600ms cubic-bezier(0.77, 0, 0.175, 1);
+}
+
+.page-edges-left {
+  left: 0;
+  transform: perspective(200px) rotateY(-2deg);
+  border-radius: 0 3px 3px 0;
+}
+
+.page-edges-right {
+  right: 0;
+  transform: perspective(200px) rotateY(2deg);
+  border-radius: 3px 0 0 3px;
+}
+
+.page-edge-layer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  box-shadow:
+    -0.5px 0 0.5px rgba(0, 0, 0, 0.08),
+    0.5px 0 0.5px rgba(255, 255, 255, 0.2);
+  pointer-events: none;
+}
+
+/* Subtle variation for realism */
+.page-edge-layer:nth-child(odd) {
+  height: calc(100% - 0.5px);
+  margin-top: 0.25px;
+}
+
+.page-edge-layer:nth-child(even) {
+  height: calc(100% - 0.3px);
+  margin-top: 0.15px;
+}
+
+/* Edge shadows for depth */
+.edge-shadow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.page-edges-left .edge-shadow {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.12) 0%,
+    rgba(0, 0, 0, 0.06) 30%,
+    transparent 60%
+  );
+  mix-blend-mode: multiply;
+}
+
+.page-edges-right .edge-shadow {
+  background: linear-gradient(
+    270deg,
+    rgba(0, 0, 0, 0.12) 0%,
+    rgba(0, 0, 0, 0.06) 30%,
+    transparent 60%
+  );
+  mix-blend-mode: multiply;
+}
+
+/* Animation states */
+.page-edges.animating {
+  transition: width 900ms cubic-bezier(0.77, 0, 0.175, 1);
+}
+
+.page-edges-left.animating {
+  animation: edge-expand-left 900ms ease-in-out;
+}
+
+.page-edges-right.animating {
+  animation: edge-shrink-right 900ms ease-in-out;
+}
+
+@keyframes edge-expand-left {
+  0% { filter: brightness(1); }
+  50% { filter: brightness(0.95); }
+  100% { filter: brightness(1); }
+}
+
+@keyframes edge-shrink-right {
+  0% { filter: brightness(1); }
+  50% { filter: brightness(1.05); }
+  100% { filter: brightness(1); }
+}
+
+/* Ensure pages are positioned correctly with edges */
+.book-interior > .page {
+  position: relative;
+  z-index: 2;
 }
