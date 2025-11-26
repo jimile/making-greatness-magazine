@@ -44,7 +44,9 @@ const layouts = [
 ];
 
 function PageSketch({ pageNumber }: { pageNumber: number }) {
-  const shapes = useMemo(() => layouts[pageNumber % layouts.length], [pageNumber]);
+  // Ensure pageNumber is always valid and non-negative
+  const safePageNumber = Math.max(0, pageNumber);
+  const shapes = useMemo(() => layouts[safePageNumber % layouts.length], [safePageNumber]);
 
   return (
     <div className="page-sketch">
@@ -64,7 +66,7 @@ function PageSketch({ pageNumber }: { pageNumber: number }) {
           )}
         </div>
       ))}
-      <div className="page-number">{pageNumber + 1}</div>
+      <div className="page-number">{safePageNumber + 1}</div>
     </div>
   );
 }
@@ -273,7 +275,7 @@ export function Book() {
                   pageNumber={
                     turning === "next"
                       ? rightPageNumber // Current right page turning left
-                      : leftPageNumber - 1 // Previous left page turning back right
+                      : Math.max(0, leftPageNumber - 1) // Previous left page turning back right
                   }
                 />
               </div>
@@ -282,7 +284,7 @@ export function Book() {
                 <PageSketch
                   pageNumber={
                     turning === "next"
-                      ? rightPageNumber + 1 // Next page on the back
+                      ? Math.min(rightPageNumber + 1, totalSpreads * 2 - 1) // Next page on the back
                       : leftPageNumber // Current left page becomes new right
                   }
                 />

@@ -253,14 +253,14 @@ body {
 
 .page-turner.turn-next {
   transform-origin: 0% 50%;
-  animation: page-turn-next var(--turn-duration, 900ms) cubic-bezier(0.45, 0, 0.15, 1) forwards;
+  animation: page-turn-next var(--turn-duration, 900ms) cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
 }
 
 .page-turner.turn-prev {
   left: 0;
   right: 50%;
   transform-origin: 100% 50%;
-  animation: page-turn-prev var(--turn-duration, 900ms) cubic-bezier(0.45, 0, 0.15, 1) forwards;
+  animation: page-turn-prev var(--turn-duration, 900ms) cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
 }
 
 /* Front of the turning page */
@@ -295,14 +295,31 @@ body {
     90deg,
     transparent 0%,
     transparent 30%,
-    rgba(255, 255, 255, 0.3) 45%,
-    rgba(0, 0, 0, 0.1) 55%,
+    rgba(255, 255, 255, 0.4) 42%,
+    rgba(255, 255, 255, 0.6) 48%,
+    rgba(0, 0, 0, 0.15) 52%,
+    rgba(0, 0, 0, 0.1) 58%,
     transparent 70%,
     transparent 100%
   );
   opacity: 0;
   animation: page-curl var(--turn-duration, 900ms) ease-in-out;
   mix-blend-mode: overlay;
+  pointer-events: none;
+}
+
+/* Additional bending effect */
+.page-turner-front::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at var(--bend-position, 50%) 50%,
+    rgba(0, 0, 0, 0.08) 0%,
+    transparent 60%
+  );
+  opacity: 0;
+  animation: page-bend var(--turn-duration, 900ms) ease-in-out;
   pointer-events: none;
 }
 
@@ -533,21 +550,76 @@ body {
 }
 
 @keyframes page-curl {
-  0%, 100% {
+  0% {
     opacity: 0;
     transform: translateX(100%);
   }
+  10% {
+    opacity: 0.3;
+    transform: translateX(80%);
+  }
   20% {
-    opacity: 0.7;
+    opacity: 0.6;
     transform: translateX(60%);
+  }
+  30% {
+    opacity: 0.8;
+    transform: translateX(40%);
+  }
+  40% {
+    opacity: 0.9;
+    transform: translateX(20%);
   }
   50% {
     opacity: 1;
     transform: translateX(0%);
   }
+  60% {
+    opacity: 0.9;
+    transform: translateX(-20%);
+  }
+  70% {
+    opacity: 0.8;
+    transform: translateX(-40%);
+  }
   80% {
-    opacity: 0.7;
+    opacity: 0.6;
     transform: translateX(-60%);
+  }
+  90% {
+    opacity: 0.3;
+    transform: translateX(-80%);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes page-bend {
+  0%, 100% {
+    opacity: 0;
+    --bend-position: 100%;
+  }
+  20% {
+    opacity: 0.3;
+    --bend-position: 80%;
+  }
+  40% {
+    opacity: 0.6;
+    --bend-position: 60%;
+  }
+  50% {
+    opacity: 0.8;
+    --bend-position: 50%;
+  }
+  60% {
+    opacity: 0.6;
+    --bend-position: 40%;
+  }
+  80% {
+    opacity: 0.3;
+    --bend-position: 20%;
   }
 }
 
