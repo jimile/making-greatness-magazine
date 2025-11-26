@@ -58,7 +58,11 @@ function PageSketch({ pageNumber }: { pageNumber: number }) {
             width: `${shape.w}%`,
             height: `${shape.h}%`,
           }}
-        />
+        >
+          {shape.label && (
+            <span className="page-box-label">{shape.label}</span>
+          )}
+        </div>
       ))}
       <div className="page-number">{pageNumber + 1}</div>
     </div>
@@ -263,14 +267,26 @@ export function Book() {
               style={{ ["--turn-duration" as any]: `${TURN_DURATION}ms` }}
               aria-hidden
             >
-              <PageSketch
-                pageNumber={
-                  turning === "next"
-                    ? rightPageNumber
-                    : Math.max((spreadIndex - 1) * 2 + 1, 0)
-                }
-              />
-              <div className="page-turner-back" />
+              {/* Front of the page (what you see before it flips) */}
+              <div className="page-turner-front">
+                <PageSketch
+                  pageNumber={
+                    turning === "next"
+                      ? rightPageNumber
+                      : Math.max((spreadIndex - 1) * 2, 0) // Left page when turning back
+                  }
+                />
+              </div>
+              {/* Back of the page (what you see after it flips) */}
+              <div className="page-turner-back">
+                <PageSketch
+                  pageNumber={
+                    turning === "next"
+                      ? rightPageNumber + 1 // Next page on the back
+                      : Math.max((spreadIndex - 1) * 2 + 1, 0) // Previous right page
+                  }
+                />
+              </div>
             </div>
           )}
         </div>
