@@ -272,8 +272,8 @@ export function Book() {
                 <PageSketch
                   pageNumber={
                     turning === "next"
-                      ? rightPageNumber
-                      : Math.max((spreadIndex - 1) * 2, 0) // Left page when turning back
+                      ? rightPageNumber // Current right page turning left
+                      : leftPageNumber - 1 // Previous left page turning back right
                   }
                 />
               </div>
@@ -283,7 +283,7 @@ export function Book() {
                   pageNumber={
                     turning === "next"
                       ? rightPageNumber + 1 // Next page on the back
-                      : Math.max((spreadIndex - 1) * 2 + 1, 0) // Previous right page
+                      : leftPageNumber // Current left page becomes new right
                   }
                 />
               </div>
