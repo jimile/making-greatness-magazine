@@ -36,7 +36,29 @@ body {
   flex-direction: column;
   gap: 16px;
   align-items: center;
+  justify-content: center;
   width: 100%;
+  max-width: 980px;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+/* Controls below the book */
+.book-controls {
+  width: min(100%, 980px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  color: #1e1f22;
+  padding: 16px 0;
+}
+
+.page-indicator {
+  font-size: 0.9rem;
+  color: #3f3f46;
+  min-width: 120px;
+  text-align: center;
 }
 
 .book-chrome {
@@ -97,14 +119,30 @@ body {
   perspective: 2500px;
   perspective-origin: 50% 50%;
   overflow: visible;
+  /* Center the closed book horizontally */
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .book-viewport:not([data-open="true"]) {
   cursor: pointer;
 }
 
-.book-frame {
+/* When closed, the book-frame should be half width and centered */
+.book-viewport:not([data-open="true"]) .book-frame {
+  width: 50%;
+  transform: translateX(0);
+  transition: width 0.5s ease, transform 0.5s ease;
+}
+
+/* When open, book-frame takes full width */
+.book-viewport[data-open="true"] .book-frame {
   width: 100%;
+  transition: width 0.5s ease, transform 0.5s ease;
+}
+
+.book-frame {
   height: 100%;
   position: relative;
   transform-style: preserve-3d;
@@ -226,6 +264,26 @@ body {
   overflow: hidden;
   z-index: var(--page-depth);
   transition: opacity 200ms ease;
+}
+
+/* When book is closed, pages take full width */
+.book-viewport:not([data-open="true"]) .book-closed-pages-right {
+  left: 0;
+  right: calc(var(--page-offset) * -1);
+  box-shadow:
+    1px 2px 0 0 rgba(255, 255, 255, 0.9),
+    1px 2px 0 1px rgba(22, 22, 22, 0.3),
+    0 4px 8px -6px rgba(0, 0, 0, 0.35);
+}
+
+/* When book is open, pages start from center */
+.book-viewport[data-open="true"] .book-closed-pages-right {
+  left: 50%;
+  right: calc(var(--page-offset) * -1);
+  box-shadow:
+    1px 2px 0 0 rgba(255, 255, 255, 0.9),
+    1px 2px 0 1px rgba(22, 22, 22, 0.3),
+    0 4px 8px -6px rgba(0, 0, 0, 0.35);
 }
 
 .book-closed-pages-right {
@@ -518,7 +576,7 @@ body {
   position: absolute;
   top: 0;
   bottom: 0;
-  left: 50%;
+  left: 0;
   right: 0;
   background-color: #f3a126;  /* Orange color directly */
   background-color: var(--cover-orange);  /* With variable */
@@ -544,8 +602,10 @@ body {
   box-shadow: inset 2px 0 4px rgba(0, 0, 0, 0.28);
 }
 
-/* Special styling for cover opening animation */
+/* Special styling for cover opening animation - starts from full width when centered closed */
 .page-turner.cover-opening {
+  left: 0;
+  right: 0;
   transform-origin: 0% 50%;
 }
 
@@ -698,4 +758,113 @@ body {
   position: relative;
   transform-origin: center center;
   will-change: auto;
+}
+
+/* Clickable pages for navigation */
+.page-clickable {
+  cursor: pointer;
+  transition: box-shadow 0.2s ease;
+}
+
+.page-clickable:hover {
+  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.08);
+}
+
+.page-clickable:active {
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.12);
+}
+
+/* Touch-friendly feedback */
+@media (hover: none) {
+  .page-clickable:hover {
+    box-shadow: none;
+  }
+  
+  .page-clickable:active {
+    box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* Mobile responsive styles */
+@media (max-width: 768px) {
+  .book-shell {
+    padding: 12px;
+    gap: 12px;
+  }
+  
+  .book-viewport {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+  }
+  
+  .book-controls {
+    width: 100%;
+    gap: 12px;
+    padding: 12px 0;
+    flex-wrap: wrap;
+  }
+  
+  .ghost-btn {
+    padding: 10px 16px;
+    font-size: 0.9rem;
+  }
+  
+  .page-indicator {
+    font-size: 0.85rem;
+    min-width: 100px;
+  }
+  
+  .page-number {
+    font-size: 0.65rem;
+    bottom: 8px;
+    left: 8px;
+  }
+  
+  .page-right .page-number {
+    right: 8px;
+    left: auto;
+  }
+  
+  /* Make closed book more touch-friendly */
+  .book-cover-closed::after {
+    content: "Tap to Open";
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.9rem;
+    color: rgba(0, 0, 0, 0.6);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .book-viewport {
+    aspect-ratio: 1 / 1;
+  }
+  
+  .book-controls {
+    gap: 8px;
+  }
+  
+  .ghost-btn {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+  }
+  
+  .page-indicator {
+    font-size: 0.8rem;
+    order: 3;
+    width: 100%;
+    margin-top: 4px;
+  }
+}
+
+/* Prevent text selection during swipe */
+.book-viewport {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: pan-y pinch-zoom;
 }

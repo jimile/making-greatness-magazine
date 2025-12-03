@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 
 type TurnDirection = "next" | "prev";
@@ -210,7 +210,6 @@ function PageSketch({ pageNumber }: { pageNumber: number }) {
             sizes="(max-width: 768px) 100vw, 50vw"
           />
         </div>
-        <div className="page-number">{pageNumber}</div>
       </div>
     );
   }
@@ -219,7 +218,6 @@ function PageSketch({ pageNumber }: { pageNumber: number }) {
   return (
     <div className="page-sketch">
       <div className="page-blank" />
-      <div className="page-number">{pageNumber}</div>
     </div>
   );
 }
@@ -277,6 +275,11 @@ export function Book() {
   const [spreadIndex, setSpreadIndex] = useState(-1);
   const [turning, setTurning] = useState<TurnDirection | null>(null);
   const [turnKey, setTurnKey] = useState(0);
+  
+  // Touch/swipe state
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const bookViewportRef = useRef<HTMLDivElement>(null);
 
   // Book is open when spreadIndex is 0 or greater
   const isOpen = spreadIndex >= 0;
@@ -357,6 +360,54 @@ export function Book() {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [canNext, canPrev, queueTurn]);
 
+  // Touch/swipe handlers for mobile
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  }, []);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (touchStartX.current === null || touchStartY.current === null) return;
+    
+    const touchEndX = e.changedTouches[0].clientX;
+    const touchEndY = e.changedTouches[0].clientY;
+    const deltaX = touchEndX - touchStartX.current;
+    const deltaY = touchEndY - touchStartY.current;
+    
+    // Only trigger swipe if horizontal movement is greater than vertical
+    // and the swipe is at least 50px
+    const minSwipeDistance = 50;
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
+      if (deltaX < 0 && canNext) {
+        // Swipe left -> next page
+        queueTurn('next');
+      } else if (deltaX > 0 && canPrev) {
+        // Swipe right -> previous page
+        queueTurn('prev');
+      }
+    }
+    
+    touchStartX.current = null;
+    touchStartY.current = null;
+  }, [canNext, canPrev, queueTurn]);
+
+  // Handle page click navigation
+  const handlePageClick = useCallback((side: 'left' | 'right') => {
+    if (turning) return;
+    if (side === 'right' && canNext) {
+      queueTurn('next');
+    } else if (side === 'left' && canPrev) {
+      queueTurn('prev');
+    }
+  }, [turning, canNext, canPrev, queueTurn]);
+
+  // Handle closed book click to open
+  const handleClosedBookClick = useCallback(() => {
+    if (!isOpen && canNext && !turning) {
+      queueTurn('next');
+    }
+  }, [isOpen, canNext, turning, queueTurn]);
+
   const renderClosedPages = useCallback((count: number, side: 'left' | 'right' = 'right') => {
     // Use smaller offset for many pages to prevent excessive width
     const offsetStep = count > 30 ? 1.0 : 1.3;
@@ -386,28 +437,13 @@ export function Book() {
 
   return (
     <div className="book-shell">
-      <div className="book-chrome">
-        <button
-          className="ghost-btn"
-          onClick={() => queueTurn("prev")}
-          disabled={!canPrev}
-          aria-label="Previous spread"
-        >
-          ← Prev
-        </button>
-        <button
-          className="ghost-btn"
-          onClick={() => queueTurn("next")}
-          disabled={!canNext}
-          aria-label="Next spread"
-        >
-          Next →
-        </button>
-      </div>
-
       <div
         className="book-viewport"
         data-open={isOpen}
+        ref={bookViewportRef}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onClick={!isOpen ? handleClosedBookClick : undefined}
       >
         <div className="book-frame">
           {isOpen && remainingClosedLayers > 0 && (
@@ -433,12 +469,24 @@ export function Book() {
             {/* Only show pages when book is open */}
             {isOpen && (
               <>
-                <div className="page page-left">
+                <div 
+                  className="page page-left page-clickable"
+                  onClick={() => handlePageClick('left')}
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Previous page"
+                >
                   <PageSketch pageNumber={
                     turning === "prev" ? leftPageNumber - 2 : leftPageNumber
                   } />
                 </div>
-                <div className="page page-right">
+                <div 
+                  className="page page-right page-clickable"
+                  onClick={() => handlePageClick('right')}
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Next page"
+                >
                   <PageSketch pageNumber={
                     turning === "next" ? rightPageNumber + 2 : rightPageNumber
                   } />
@@ -497,6 +545,29 @@ export function Book() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Navigation buttons below the book */}
+      <div className="book-controls">
+        <button
+          className="ghost-btn"
+          onClick={() => queueTurn("prev")}
+          disabled={!canPrev}
+          aria-label="Previous spread"
+        >
+          ← Prev
+        </button>
+        <div className="page-indicator">
+          {isOpen ? `${Math.max(1, spreadIndex * 2 + 1)}-${Math.min(TOTAL_PAGES, spreadIndex * 2 + 2)} / ${TOTAL_PAGES}` : 'Tap to open'}
+        </div>
+        <button
+          className="ghost-btn"
+          onClick={() => queueTurn("next")}
+          disabled={!canNext}
+          aria-label="Next spread"
+        >
+          Next →
+        </button>
       </div>
     </div>
   );
