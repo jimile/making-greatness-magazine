@@ -163,7 +163,7 @@ const DESIGN_IMAGES = [
 
 // Calculate spread count based on available images (each spread has 2 pages)
 const SPREAD_COUNT = Math.ceil(DESIGN_IMAGES.length / 2);
-const TURN_DURATION = 1100; // ms - increased for smoother animation
+const TURN_DURATION = 600; // ms - faster page turn animation
 const TOTAL_PAGES = SPREAD_COUNT * 2;
 const BASE_STACK_PAGES = 0; // No permanent pages - all pages can be turned
 const VISIBLE_STACK_LAYERS = 50; // Match the actual page count for realism
@@ -179,7 +179,7 @@ function PageSketch({ pageNumber }: { pageNumber: number }) {
             src={`/DESIGN ARCHIVE FOR WEBSITE-20251126T045719Z-1-001/${DESIGN_IMAGES[0]}`}
             alt="Book Cover"
             fill
-            style={{ objectFit: "contain" }}
+            style={{ objectFit: "cover" }}
             sizes="(max-width: 768px) 100vw, 50vw"
             priority
           />
@@ -206,7 +206,7 @@ function PageSketch({ pageNumber }: { pageNumber: number }) {
             src={`/DESIGN ARCHIVE FOR WEBSITE-20251126T045719Z-1-001/${DESIGN_IMAGES[imageIndex]}`}
             alt={`Page ${pageNumber}`}
             fill
-            style={{ objectFit: "contain" }}
+            style={{ objectFit: "cover" }}
             sizes="(max-width: 768px) 100vw, 50vw"
           />
         </div>
@@ -434,10 +434,14 @@ export function Book() {
             {isOpen && (
               <>
                 <div className="page page-left">
-                  <PageSketch pageNumber={leftPageNumber} />
+                  <PageSketch pageNumber={
+                    turning === "prev" ? leftPageNumber - 2 : leftPageNumber
+                  } />
                 </div>
                 <div className="page page-right">
-                  <PageSketch pageNumber={rightPageNumber} />
+                  <PageSketch pageNumber={
+                    turning === "next" ? rightPageNumber + 2 : rightPageNumber
+                  } />
                 </div>
               </>
             )}
@@ -467,26 +471,26 @@ export function Book() {
             <div
               key={turnKey}
               className={`page-turner ${turning === "next" ? "turn-next" : "turn-prev"} ${spreadIndex === -1 && turning === "next" ? "cover-opening" : ""} ${spreadIndex === 0 && turning === "prev" ? "cover-closing" : ""}`}
-              style={{ ["--turn-duration" as any]: `${TURN_DURATION}ms` }}
+              style={{ ["--turn-duration" as string]: `${TURN_DURATION}ms` }}
               aria-hidden
             >
-              {/* Front of the page (what you see before it flips) */}
+              {/* Front of the page */}
               <div className="page-turner-front">
                 <PageSketch
                   pageNumber={
                     turning === "next"
-                      ? (spreadIndex === -1 ? 0 : rightPageNumber) // Orange cover or current right page
-                      : (spreadIndex === 0 ? 1 : leftPageNumber - 2) // First content page going back to cover
+                      ? (spreadIndex === -1 ? 0 : rightPageNumber)
+                      : leftPageNumber
                   }
                 />
               </div>
-              {/* Back of the page (what you see after it flips) */}
+              {/* Back of the page - shows next page content */}
               <div className="page-turner-back">
                 <PageSketch
                   pageNumber={
                     turning === "next"
-                      ? (spreadIndex === -1 ? 1 : rightPageNumber + 1) // First content page or next left page
-                      : (spreadIndex === 0 ? 0 : rightPageNumber - 2) // Orange cover (when closing) or previous right page
+                      ? (spreadIndex === -1 ? 1 : leftPageNumber + 2)
+                      : (spreadIndex === 0 ? 0 : leftPageNumber - 1)
                   }
                 />
               </div>

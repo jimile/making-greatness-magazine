@@ -94,7 +94,9 @@ body {
   position: relative;
   width: min(100%, 980px);
   aspect-ratio: 3 / 2;
-  perspective: 2000px;
+  perspective: 2500px;
+  perspective-origin: 50% 50%;
+  overflow: visible;
 }
 
 .book-viewport:not([data-open="true"]) {
@@ -106,8 +108,13 @@ body {
   height: 100%;
   position: relative;
   transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
   filter: drop-shadow(0 18px 32px rgba(0, 0, 0, 0.28));
   isolation: isolate;
+  overflow: visible;
+  /* Keep the book frame fixed in place */
+  will-change: auto;
+  transform: translateZ(0);
 }
 
 .book-interior {
@@ -116,7 +123,6 @@ body {
   display: grid;
   grid-template-columns: 1fr 1fr;
   background: linear-gradient(90deg, var(--page-cream) 0%, #ffffff 50%, var(--page-cream) 100%);
-  overflow: hidden;
   border: 2px solid var(--cover-stroke);
   border-radius: 3px;
   box-sizing: border-box;
@@ -128,8 +134,9 @@ body {
   transform: translateZ(0) scale(0.98);
   transition: opacity 500ms ease, transform 500ms ease;
   z-index: 4;
-  transform-style: preserve-3d;
-  backface-visibility: hidden;
+  overflow: visible;
+  /* Keep interior stable */
+  will-change: opacity, transform;
 }
 
 .book-viewport[data-open="true"] .book-interior {
@@ -283,6 +290,7 @@ body {
 
 /* Removed old unused cover animations and styles */
 
+/* Page turner container - this is the rotating element */
 .page-turner {
   position: absolute;
   top: 0;
@@ -290,94 +298,66 @@ body {
   left: 50%;
   right: 0;
   transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
   pointer-events: none;
-  z-index: 10;
+  z-index: 100;
 }
 
 .page-turner.turn-next {
+  /* Rotate from the left edge (spine) */
   transform-origin: 0% 50%;
-  animation: page-turn-next var(--turn-duration, 900ms) cubic-bezier(0.45, 0.05, 0.35, 1) forwards;
+  animation: page-turn-next var(--turn-duration, 600ms) cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 .page-turner.turn-prev {
   left: 0;
   right: 50%;
+  /* Rotate from the right edge (spine) */
   transform-origin: 100% 50%;
-  animation: page-turn-prev var(--turn-duration, 900ms) cubic-bezier(0.45, 0.05, 0.35, 1) forwards;
+  animation: page-turn-prev var(--turn-duration, 600ms) cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
-/* Front of the turning page */
-.page-turner-front {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, var(--page-cream) 0%, #f4eedf 100%);
-  border: 1px solid rgba(22, 22, 22, 0.18);
-  backface-visibility: hidden;
-  overflow: hidden;
-  box-shadow:
-    0 0 0 1px var(--cover-stroke),
-    2px 0 6px rgba(0, 0, 0, 0.1),
-    4px 0 12px rgba(0, 0, 0, 0.05);
-}
-
-.page-turner.turn-next .page-turner-front {
-  transform: rotateY(0deg);
-}
-
-.page-turner.turn-prev .page-turner-front {
-  transform: rotateY(0deg);
-}
-
-/* Page curl gradient effect during turn */
-.page-turner-front::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    transparent 25%,
-    rgba(255, 255, 255, 0.3) 40%,
-    rgba(255, 255, 255, 0.5) 48%,
-    rgba(0, 0, 0, 0.12) 52%,
-    rgba(0, 0, 0, 0.08) 60%,
-    transparent 75%,
-    transparent 100%
-  );
-  opacity: 0;
-  animation: page-curl var(--turn-duration, 1100ms) cubic-bezier(0.45, 0.05, 0.35, 1);
-  mix-blend-mode: overlay;
-  pointer-events: none;
-}
-
-/* Additional bending effect */
-.page-turner-front::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    ellipse at var(--bend-position, 50%) 50%,
-    rgba(0, 0, 0, 0.06) 0%,
-    transparent 70%
-  );
-  opacity: 0;
-  animation: page-bend var(--turn-duration, 1100ms) cubic-bezier(0.45, 0.05, 0.35, 1);
-  pointer-events: none;
-}
-
-/* Back of the turning page */
+/* Both faces share these base styles */
+.page-turner-front,
 .page-turner-back {
   position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, #f4eedf 0%, var(--page-cream) 100%);
-  border: 1px solid rgba(22, 22, 22, 0.18);
-  transform: rotateY(180deg);
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  background: linear-gradient(180deg, var(--page-cream) 0%, #f4eedf 100%);
+  border: 1px solid rgba(22, 22, 22, 0.18);
   overflow: hidden;
-  box-shadow:
-    0 0 0 1px var(--cover-stroke),
-    -2px 0 6px rgba(0, 0, 0, 0.1),
-    -4px 0 12px rgba(0, 0, 0, 0.05);
+  transform-style: preserve-3d;
+}
+
+/* Front face - faces the viewer initially */
+.page-turner-front {
+  z-index: 2;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Back face - rotated 180deg, revealed when page flips past 90deg */
+.page-turner-back {
+  -webkit-transform: rotateY(180deg);
+  transform: rotateY(180deg);
+  z-index: 1;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Ensure content fills the faces */
+.page-turner-front > .page-sketch,
+.page-turner-front > .page-cover-simple,
+.page-turner-front > .page-blank,
+.page-turner-back > .page-sketch,
+.page-turner-back > .page-cover-simple,
+.page-turner-back > .page-blank {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
 /* Animation for left page appearing after turn */
@@ -402,198 +382,49 @@ body {
 }
 
 
-/* Shadow gradient that follows the page */
+/* Shadow on the page during turn - cast onto the book */
 .page-turner::before {
   content: "";
   position: absolute;
-  inset: 0;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 30px;
   background: linear-gradient(
     90deg,
-    rgba(0, 0, 0, 0.12) 0%,
-    rgba(0, 0, 0, 0.06) 15%,
-    rgba(0, 0, 0, 0.02) 35%,
-    transparent 55%
+    rgba(0, 0, 0, 0.15) 0%,
+    transparent 100%
   );
-  mix-blend-mode: multiply;
   opacity: 0;
-  animation: page-shadow var(--turn-duration, 1100ms) cubic-bezier(0.45, 0.05, 0.35, 1);
+  animation: spine-shadow var(--turn-duration, 600ms) ease-in-out;
   pointer-events: none;
 }
 
+@keyframes spine-shadow {
+  0%, 100% {
+    opacity: 0;
+  }
+  30%, 70% {
+    opacity: 1;
+  }
+}
+
+/* Page turns from spine - pure rotation, no floating */
 @keyframes page-turn-next {
   0% {
-    transform: perspective(2000px) rotateY(0deg) translateZ(0px) translateX(0px);
-    filter: drop-shadow(2px 4px 8px rgba(0, 0, 0, 0.15));
-  }
-  10% {
-    transform: perspective(2000px) rotateY(-15deg) translateZ(8px) translateX(-2px);
-    filter: drop-shadow(3px 6px 10px rgba(0, 0, 0, 0.16));
-  }
-  20% {
-    transform: perspective(2000px) rotateY(-32deg) translateZ(20px) translateX(-5px);
-    filter: drop-shadow(5px 10px 16px rgba(0, 0, 0, 0.18));
-  }
-  30% {
-    transform: perspective(2000px) rotateY(-50deg) translateZ(35px) translateX(-8px);
-    filter: drop-shadow(8px 14px 22px rgba(0, 0, 0, 0.22));
-  }
-  40% {
-    transform: perspective(2000px) rotateY(-70deg) translateZ(48px) translateX(-10px);
-    filter: drop-shadow(10px 18px 28px rgba(0, 0, 0, 0.26));
-  }
-  50% {
-    transform: perspective(2000px) rotateY(-90deg) translateZ(52px) translateX(-12px);
-    filter: drop-shadow(12px 20px 32px rgba(0, 0, 0, 0.3));
-  }
-  60% {
-    transform: perspective(2000px) rotateY(-110deg) translateZ(48px) translateX(-10px);
-    filter: drop-shadow(10px 18px 28px rgba(0, 0, 0, 0.26));
-  }
-  70% {
-    transform: perspective(2000px) rotateY(-130deg) translateZ(35px) translateX(-8px);
-    filter: drop-shadow(8px 14px 22px rgba(0, 0, 0, 0.22));
-  }
-  80% {
-    transform: perspective(2000px) rotateY(-148deg) translateZ(20px) translateX(-5px);
-    filter: drop-shadow(5px 10px 16px rgba(0, 0, 0, 0.18));
-  }
-  90% {
-    transform: perspective(2000px) rotateY(-165deg) translateZ(8px) translateX(-2px);
-    filter: drop-shadow(3px 6px 10px rgba(0, 0, 0, 0.16));
+    transform: rotateY(0deg);
   }
   100% {
-    transform: perspective(2000px) rotateY(-180deg) translateZ(0px) translateX(0px);
-    filter: drop-shadow(0px 2px 6px rgba(0, 0, 0, 0.15));
+    transform: rotateY(-180deg);
   }
 }
 
 @keyframes page-turn-prev {
   0% {
-    transform: perspective(2000px) rotateY(0deg) translateZ(0px) translateX(0px);
-    filter: drop-shadow(-2px 4px 8px rgba(0, 0, 0, 0.15));
-  }
-  10% {
-    transform: perspective(2000px) rotateY(15deg) translateZ(8px) translateX(2px);
-    filter: drop-shadow(-3px 6px 10px rgba(0, 0, 0, 0.16));
-  }
-  20% {
-    transform: perspective(2000px) rotateY(32deg) translateZ(20px) translateX(5px);
-    filter: drop-shadow(-5px 10px 16px rgba(0, 0, 0, 0.18));
-  }
-  30% {
-    transform: perspective(2000px) rotateY(50deg) translateZ(35px) translateX(8px);
-    filter: drop-shadow(-8px 14px 22px rgba(0, 0, 0, 0.22));
-  }
-  40% {
-    transform: perspective(2000px) rotateY(70deg) translateZ(48px) translateX(10px);
-    filter: drop-shadow(-10px 18px 28px rgba(0, 0, 0, 0.26));
-  }
-  50% {
-    transform: perspective(2000px) rotateY(90deg) translateZ(52px) translateX(12px);
-    filter: drop-shadow(-12px 20px 32px rgba(0, 0, 0, 0.3));
-  }
-  60% {
-    transform: perspective(2000px) rotateY(110deg) translateZ(48px) translateX(10px);
-    filter: drop-shadow(-10px 18px 28px rgba(0, 0, 0, 0.26));
-  }
-  70% {
-    transform: perspective(2000px) rotateY(130deg) translateZ(35px) translateX(8px);
-    filter: drop-shadow(-8px 14px 22px rgba(0, 0, 0, 0.22));
-  }
-  80% {
-    transform: perspective(2000px) rotateY(148deg) translateZ(20px) translateX(5px);
-    filter: drop-shadow(-5px 10px 16px rgba(0, 0, 0, 0.18));
-  }
-  90% {
-    transform: perspective(2000px) rotateY(165deg) translateZ(8px) translateX(2px);
-    filter: drop-shadow(-3px 6px 10px rgba(0, 0, 0, 0.16));
+    transform: rotateY(0deg);
   }
   100% {
-    transform: perspective(2000px) rotateY(180deg) translateZ(0px) translateX(0px);
-    filter: drop-shadow(0px 2px 6px rgba(0, 0, 0, 0.15));
-  }
-}
-
-@keyframes page-shadow {
-  0% {
-    opacity: 0;
-  }
-  15% {
-    opacity: 0.3;
-  }
-  30%, 70% {
-    opacity: 0.7;
-  }
-  50% {
-    opacity: 1;
-  }
-  85% {
-    opacity: 0.3;
-  }
-  100% {
-    opacity: 0;
-  }
-}
-
-@keyframes page-curl {
-  0% {
-    opacity: 0;
-    transform: translateX(100%) scaleX(0.7);
-  }
-  15% {
-    opacity: 0.4;
-    transform: translateX(70%) scaleX(0.8);
-  }
-  30% {
-    opacity: 0.7;
-    transform: translateX(40%) scaleX(0.9);
-  }
-  50% {
-    opacity: 1;
-    transform: translateX(0%) scaleX(1);
-  }
-  70% {
-    opacity: 0.7;
-    transform: translateX(-40%) scaleX(0.9);
-  }
-  85% {
-    opacity: 0.4;
-    transform: translateX(-70%) scaleX(0.8);
-  }
-  100% {
-    opacity: 0;
-    transform: translateX(-100%) scaleX(0.7);
-  }
-}
-
-@keyframes page-bend {
-  0% {
-    opacity: 0;
-    --bend-position: 100%;
-  }
-  15% {
-    opacity: 0.2;
-    --bend-position: 85%;
-  }
-  30% {
-    opacity: 0.5;
-    --bend-position: 70%;
-  }
-  50% {
-    opacity: 0.7;
-    --bend-position: 50%;
-  }
-  70% {
-    opacity: 0.5;
-    --bend-position: 30%;
-  }
-  85% {
-    opacity: 0.2;
-    --bend-position: 15%;
-  }
-  100% {
-    opacity: 0;
-    --bend-position: 0%;
+    transform: rotateY(180deg);
   }
 }
 
@@ -601,21 +432,15 @@ body {
   position: relative;
   width: 100%;
   height: 100%;
-  background: radial-gradient(circle at 40% 20%, rgba(243, 161, 38, 0.1), transparent 40%),
-    linear-gradient(180deg, rgba(0, 0, 0, 0.015), transparent 65%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  overflow: hidden;
 }
 
 /* Container for page images */
 .page-image-container {
-  position: relative;
-  width: 90%;
-  height: 90%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .page-box {
@@ -651,7 +476,12 @@ body {
   right: 12px;
   font-size: 0.76rem;
   letter-spacing: 0.08em;
-  color: rgba(22, 22, 22, 0.55);
+  color: rgba(22, 22, 22, 0.85);
+  background: rgba(255, 255, 255, 0.8);
+  padding: 4px 8px;
+  border-radius: 4px;
+  backdrop-filter: blur(4px);
+  z-index: 10;
 }
 
 /* Blank page (back of cover) */
@@ -666,10 +496,8 @@ body {
   width: 100%;
   height: 100%;
   background: var(--cover-orange);
-  display: flex;
-  align-items: center;
-  justify-content: center;
   position: relative;
+  overflow: hidden;
 }
 
 /* Closed book cover styles */
@@ -828,7 +656,7 @@ body {
 }
 
 .page-edges-right.animating {
-  animation: edge-shrink-right 1100ms cubic-bezier(0.45, 0.05, 0.35, 1);
+  animation: edge-shrink-right 600ms cubic-bezier(0.45, 0.05, 0.35, 1);
 }
 
 @keyframes edge-shrink-right {
