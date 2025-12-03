@@ -5,67 +5,18 @@ import { useMemo, useState, useEffect, useCallback } from "react";
 type TurnDirection = "next" | "prev";
 
 const SPREAD_COUNT = 12; // 12 spreads = 24 pages total
-const TURN_DURATION = 900; // ms
-
-const layouts = [
-  // Layout 1: Main floor plan with supporting diagrams
-  [
-    { x: 8, y: 12, w: 48, h: 52, label: "Floor Plan" },
-    { x: 62, y: 14, w: 28, h: 22, label: "Section A" },
-    { x: 62, y: 42, w: 28, h: 22, label: "Section B" },
-  ],
-  // Layout 2: Elevations
-  [
-    { x: 10, y: 8, w: 35, h: 40, label: "North Elevation" },
-    { x: 52, y: 8, w: 35, h: 40, label: "South Elevation" },
-    { x: 20, y: 54, w: 60, h: 30, label: "Detail" },
-  ],
-  // Layout 3: Site plan
-  [
-    { x: 15, y: 10, w: 70, h: 75, label: "Site Plan" },
-  ],
-  // Layout 4: Details and sections
-  [
-    { x: 8, y: 10, w: 38, h: 35, label: "Detail 1" },
-    { x: 52, y: 10, w: 38, h: 35, label: "Detail 2" },
-    { x: 8, y: 50, w: 38, h: 35, label: "Detail 3" },
-    { x: 52, y: 50, w: 38, h: 35, label: "Detail 4" },
-  ],
-  // Layout 5: 3D perspective
-  [
-    { x: 10, y: 15, w: 80, h: 65, label: "3D View" },
-  ],
-  // Layout 6: Construction details
-  [
-    { x: 12, y: 8, w: 32, h: 38, label: "Wall Section" },
-    { x: 50, y: 8, w: 38, h: 28, label: "Foundation" },
-    { x: 50, y: 42, w: 38, h: 38, label: "Roof Detail" },
-  ],
-];
+const TURN_DURATION = 1100; // ms - increased for smoother animation
+const TOTAL_PAGES = SPREAD_COUNT * 2;
+const BASE_STACK_PAGES = 80; // Permanent pages that always stay on the right
+const VISIBLE_STACK_LAYERS = 150; // Total visible pages for realistic book thickness
+const CLOSED_STACK_LAYERS = VISIBLE_STACK_LAYERS;
 
 function PageSketch({ pageNumber }: { pageNumber: number }) {
   // Ensure pageNumber is always valid and non-negative
   const safePageNumber = Math.max(0, pageNumber);
-  const shapes = useMemo(() => layouts[safePageNumber % layouts.length], [safePageNumber]);
 
   return (
     <div className="page-sketch">
-      {shapes.map((shape, i) => (
-        <div
-          key={i}
-          className="page-box"
-          style={{
-            left: `${shape.x}%`,
-            top: `${shape.y}%`,
-            width: `${shape.w}%`,
-            height: `${shape.h}%`,
-          }}
-        >
-          {shape.label && (
-            <span className="page-box-label">{shape.label}</span>
-          )}
-        </div>
-      ))}
       <div className="page-number">{safePageNumber + 1}</div>
     </div>
   );
@@ -124,6 +75,11 @@ export function Book() {
   const [spreadIndex, setSpreadIndex] = useState(0);
   const [turning, setTurning] = useState<TurnDirection | null>(null);
   const [turnKey, setTurnKey] = useState(0);
+  // Right side: base pages + remaining readable pages
+  const remainingReadablePages = Math.max(0, TOTAL_PAGES - spreadIndex * 2);
+  const remainingClosedLayers = BASE_STACK_PAGES + remainingReadablePages;
+  // Left side: only transferred readable pages (gradually builds up)
+  const turnedLayers = Math.min(spreadIndex * 2, TOTAL_PAGES);
 
   const totalSpreads = SPREAD_COUNT;
   const canNext = spreadIndex < totalSpreads - 1 && !turning;
@@ -131,18 +87,24 @@ export function Book() {
 
   const leftPageNumber = spreadIndex * 2;
   const rightPageNumber = leftPageNumber + 1;
+  const coverAnimationDuration = TURN_DURATION;
 
   // Calculate dynamic edge thickness
   const calculateEdgeThickness = useCallback(() => {
-    const progress = spreadIndex / totalSpreads;
-    const leftThickness = Math.floor(2 + (progress * 18)); // 2 to 20 layers
-    const rightThickness = Math.floor(20 - (progress * 18)); // 20 to 2 layers
+    // Don't update thickness while turning to prevent shifts
+    const actualIndex = turning ?
+      (turning === 'next' ? spreadIndex : spreadIndex) :
+      spreadIndex;
+
+    const progress = actualIndex / totalSpreads;
+    const leftThickness = Math.floor(2 + (progress * 28)); // 2 to 30 layers
+    const rightThickness = Math.floor(30 - (progress * 28)); // 30 to 2 layers
 
     return {
       left: Math.max(leftThickness, 2),
       right: Math.max(rightThickness, 2)
     };
-  }, [spreadIndex, totalSpreads]);
+  }, [spreadIndex, totalSpreads, turning]);
 
   const edgeThickness = calculateEdgeThickness();
 
@@ -158,14 +120,12 @@ export function Book() {
     setTurning(dir);
     setTurnKey((k) => k + 1);
 
+    // Update everything after animation completes
     setTimeout(() => {
       setSpreadIndex((idx) => {
         if (dir === "next") return Math.min(idx + 1, totalSpreads - 1);
         return Math.max(idx - 1, 0);
       });
-    }, TURN_DURATION * 0.5);
-
-    setTimeout(() => {
       setTurning(null);
     }, TURN_DURATION);
   }, [turning, canNext, canPrev, totalSpreads]);
@@ -181,6 +141,33 @@ export function Book() {
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [isOpen, queueTurn]);
+
+  const renderClosedPages = useCallback((count: number, side: 'left' | 'right' = 'right') => {
+    // Use smaller offset for many pages to prevent excessive width
+    const offsetStep = count > 100 ? 1.0 : 1.3;
+    const baseDepth = 30;
+    // Render all requested pages for realistic thickness
+    const maxRenderLayers = Math.min(count, 150);
+    return Array.from({ length: maxRenderLayers }).map((_, layer) => {
+      // Progressive darkening and opacity for depth effect
+      const opacity = layer > 60 ? Math.max(0.4, 1 - (layer - 60) * 0.006) : 1;
+      const brightness = layer > 40 ? Math.max(0.7, 1 - (layer - 40) * 0.003) : 1;
+
+      return (
+        <div
+          key={`${side}-${layer}`}
+          className={`book-closed-pages book-closed-pages-${side}`}
+          aria-hidden
+          style={{
+            ["--page-offset" as any]: `${layer * offsetStep}px`,
+            ["--page-depth" as any]: `${baseDepth + count - layer}`,
+            opacity,
+            filter: `brightness(${brightness})`,
+          }}
+        />
+      );
+    });
+  }, []);
 
   return (
     <div className="book-shell">
@@ -217,13 +204,23 @@ export function Book() {
         }}
       >
         <div className="book-frame">
+          {isOpen && remainingClosedLayers > 0 && (
+            <div className="book-stack" data-side="right" aria-hidden>
+              {renderClosedPages(remainingClosedLayers, 'right')}
+            </div>
+          )}
+          {isOpen && turnedLayers > 0 && (
+            <div className="book-stack" data-side="left" aria-hidden>
+              {renderClosedPages(turnedLayers, 'left')}
+            </div>
+          )}
           <div className="book-interior">
             {/* Left page edges */}
             {isOpen && (
               <PageEdges
                 side="left"
                 thickness={edgeThickness.left}
-                isAnimating={turning !== null}
+                isAnimating={false} // Left edges should never animate
               />
             )}
 
@@ -239,7 +236,7 @@ export function Book() {
               <PageEdges
                 side="right"
                 thickness={edgeThickness.right}
-                isAnimating={turning !== null}
+                isAnimating={turning === 'next'} // Only animate when turning next
               />
             )}
 
@@ -248,8 +245,36 @@ export function Book() {
           </div>
 
           {!isOpen && (
-            <div className="book-cover" role="button" aria-label="Open book">
-            </div>
+            <>
+              {renderClosedPages(VISIBLE_STACK_LAYERS, 'right')}
+              <div
+                className="book-cover"
+                role="button"
+                aria-label="Open book"
+                style={{ ["--turn-duration" as any]: `${coverAnimationDuration}ms` }}
+              >
+                <div className="cover-layout">
+                  <div className="cover-top">
+                    <div className="cover-image-card">
+                      <div className="cover-heat-blob" />
+                      <div className="cover-heat-outline" />
+                    </div>
+                    <span className="cover-author">Architectural Drawings</span>
+                  </div>
+                  <div className="cover-title-block">
+                    <span className="cover-title">
+                      Design
+                      <br />
+                      Portfolio
+                    </span>
+                  </div>
+                  <div className="cover-footer">
+                    <span>2024 Collection</span>
+                    <span>Volume 1</span>
+                  </div>
+                </div>
+              </div>
+            </>
           )}
 
           {turning && (
@@ -274,8 +299,8 @@ export function Book() {
                 <PageSketch
                   pageNumber={
                     turning === "next"
-                      ? Math.min(rightPageNumber + 1, totalSpreads * 2 - 1) // Next page on the back
-                      : leftPageNumber // Current left page becomes new right
+                      ? rightPageNumber + 1 // Next left page
+                      : leftPageNumber - 1 // Previous right page
                   }
                 />
               </div>
