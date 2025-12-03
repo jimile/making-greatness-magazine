@@ -193,12 +193,6 @@ export function Book() {
         >
           ← Prev
         </button>
-        <div className="book-meta">
-          <span className="meta-pill">{isOpen ? "Architecture study" : "Tap cover to open"}</span>
-          <span className="meta-pill">
-            {spreadIndex + 1} / {totalSpreads}
-          </span>
-        </div>
         <button
           className="ghost-btn"
           onClick={() => {
@@ -255,10 +249,6 @@ export function Book() {
 
           {!isOpen && (
             <div className="book-cover" role="button" aria-label="Open book">
-              <div className="cover-title">
-                <span className="cover-tag">Architecture</span>
-                <span className="cover-name">blank gallery</span>
-              </div>
             </div>
           )}
 
