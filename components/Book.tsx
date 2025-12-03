@@ -1,10 +1,168 @@
 "use client";
 
 import { useMemo, useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 
 type TurnDirection = "next" | "prev";
 
-const SPREAD_COUNT = 25; // 25 spreads = 50 pages total
+// Array of all image filenames from the design archive
+const DESIGN_IMAGES = [
+  "(+81) GARBAGE POST (FINAL 1).PNG",
+  "(+81) GARBAGE POST (FINAL 2).PNG",
+  "(1) edit.JPG",
+  "(1)revised.JPEG",
+  "(14).JPG",
+  "(16).JPG",
+  "(18).JPG",
+  "(2).JPG",
+  "(2)-2.JPG",
+  "(3).JPG",
+  "(4).JPEG",
+  "(4).JPG",
+  "(4).PNG",
+  "(5).JPEG",
+  "(5).JPG",
+  "(6).JPG",
+  "(7) - EDGES.JPG",
+  "02E8BB51-8240-4A0B-8D3E-9F8E0FF9BD97.JPG",
+  "09D396B8-A6EF-45B9-891C-634252824EA7.JPG",
+  "1111.JPG",
+  "2025-03-18_135359_1.JPG",
+  "2025-04-23_145057.JPG",
+  "349CC09B-05F9-4144-A7F9-33F154BD3C56.JPG",
+  "377A0F70-2DBF-44BF-8718-A6438FA77EB5.JPG",
+  "3QM28THJAN.JPG",
+  "47A5A104-6236-4420-8EA4-74533A0C9AEE.JPG",
+  "60003D60-8FF3-4BC8-8066-DC2E7BC9A036.JPG",
+  "65FF1F41-87A7-49F3-96A1-9D8AD50F9EC2.JPG",
+  "6744CC2C-AAF0-4F4C-AE64-886C2D239616.JPG",
+  "678CA202-3B4F-44D7-A8D7-68BFC5792651.JPG",
+  "72762948-1092-4093-9C19-AA6DDD1DE994.JPG",
+  "A4(YELLOW)-2.JPG",
+  "Artboard 5.JPG",
+  "Artboard 7.JPG",
+  "Artboard 8.JPG",
+  "Artboard 9.JPG",
+  "AWNING TOUR (FINAL) - CREAM).jpg",
+  "awningedit(1).JPG",
+  "BALU(1) copy-2.JPG",
+  "BANDITS FT. OSCAR LANG.JPG",
+  "BANDITS-2.JPG",
+  "BLUE(FULLSIZE).JPG",
+  "BONHOMIE MAIN (FINAL)-1.JPG",
+  "BONHOMIE MAIN (FINAL)-2.JPG",
+  "BONHOMIE MAIN (FINAL)-6.JPG",
+  "BONHOMIE MAIN (FINAL)-8.JPG",
+  "BONHOMIE MAIN (FINAL)-9.JPG",
+  "CC3F7885-0CD5-4E94-91F0-7A14B51EC79C.JPG",
+  "CF8448FC-3008-4BF4-87B1-75FF9BD4BAA2.JPG",
+  "COLLAGE(FULLSIZE)UPDATED.JPG",
+  "CUTPRINT(1)-2.JPG",
+  "CUTPRINT(2)-2.JPG",
+  "D18F9739-371C-41CE-8280-B489AC10FFD0.JPG",
+  "D3B11819-7AD9-4985-BBDE-0D29259AB002.JPG",
+  "D4855C02-30A3-4206-B027-7268A88BBA48.JPG",
+  "D9B63ABE-012A-41B1-8040-3658E99F5139.JPG",
+  "F1100C50-3AC4-488A-8A68-24124C92286F.JPG",
+  "FD (EDIT).JPG",
+  "FD INSTA 4.JPG",
+  "FD INSTA 8.JPG",
+  "FD PRINT (1).JPG",
+  "FINAL_.JPG",
+  "FLUX(POSTER4).JPG",
+  "FLYING NUN RECORD STORE DAY (IDEA 2-2).JPG",
+  "GOBLIN A4 POSTER.jpg",
+  "HAND.JPG",
+  "Handwritten_2023-07-13_155950.JPG",
+  "HAPPY IDEA (11).PNG",
+  "HAPPY IDEA (7).PNG",
+  "HELMETMADE AD (3).JPG",
+  "HOP TOUR (13TH WLG)-1.JPG",
+  "IDEAPOSTERELI copy.JPEG",
+  "IMG_8603.jpg",
+  "INDOOR - OUTDOOR.JPEG",
+  "insta post 3.JPG",
+  "INSTA(2)-2.JPG",
+  "INSTA(3)-2.JPG",
+  "INSTA(SIZE)-2.JPG",
+  "INSTA.PNG",
+  "JB BAND POSTER (7).JPG",
+  "KEVIN EYES (1)-2.JPG",
+  "KEVIN EYES (2)-2.JPG",
+  "KEVIN EYES (3)-2.JPG",
+  "LOW STRUNG - UP LATE (FINAL).JPG",
+  "LOWSTRUNGFINAL(REVISED).JPEG",
+  "LS (FINAL).JPG",
+  "merchdesign copy.JPG",
+  "MOLLY (NUMBER2BLACK).PNG",
+  "MOLLY _MAYBE_ FINAL (BLUE).PNG",
+  "MOLLY _MAYBE_ FINAL (PINK).PNG",
+  "MUSCLECAR IDEA - GREEN copy.JPG",
+  "MUSTANG(FINALPRINT2)-2.JPG",
+  "N&R(WELLIES B&W).JPG",
+  "N&R(WELLIESB&WCOLOUR).JPG",
+  "PARK RD AUS PRINT(1).PNG",
+  "Photo_2025-04-06_120830_1.JPG",
+  "Photo_2025-04-23_143631.JPG",
+  "Photo_2025-04-24_091448.JPG",
+  "PHOTOS(1)-2.JPG",
+  "PHOTOS(3)-2.JPG",
+  "PHOTOS(4) -2.JPG",
+  "PHOTOS(5)-2.JPG",
+  "POSTER (BORDERRREDO).JPG",
+  "POSTER IDEA (3)-2.JPG",
+  "POSTER IDEA (5)-2.JPG",
+  "POSTER IDEA (ELI-2).JPG",
+  "POSTER(NOBORDER)-2.JPG",
+  "POSTER(YELLOW) copy.JPG",
+  "POSTER-2.JPG",
+  "PRINT(1).JPG",
+  "PRINT(1)-2.JPG",
+  "PRINT(2).JPG",
+  "PRINT(4).JPG",
+  "PRINT(5).JPG",
+  "PRINT(6).JPG",
+  "PRINT(7TH).JPG",
+  "PRINT-2redo.JPG",
+  "PS (018-2).JPG",
+  "RABBIT.JPG",
+  "RECAP(5) copy-2.JPG",
+  "RED POSTER (3).JPG",
+  "RETURN OF EDEN BURNZ.JPG",
+  "RYAN(YELLOW).JPG",
+  "SALAD (1)-2.JPG",
+  "SALAD (3)-2.JPG",
+  "SALAD (4)-2.JPG",
+  "SALAD (EOM +GA) 2.JPG",
+  "SALT WATER CRIMINALS X AWNING @ GOBLIN.jpg",
+  "SLACKBARN MAIN POSTER - (IMAGE) - INSTAGRAM.jpg",
+  "STARGAZING X OPEN LATE (FINAL A4) ALT COLOUR.PNG",
+  "STARGAZING X OPEN LATE (FINAL A4).PNG",
+  "STINK (PICTURE FOR POST2)-2.JPG",
+  "STINK (PICTURE FOR POST2)-5.JPG",
+  "SWC GARBAGE INSTA (2).JPG",
+  "SWC GARBAGE INSTA (3)-2.JPG",
+  "SWC ORIGINAL COVER.JPG",
+  "SWC POST (2).JPG",
+  "SWC POST (3).JPG",
+  "SWC POST (4).JPG",
+  "SWC POST (5).JPG",
+  "SWC POST (6).JPG",
+  "SWC POST (7).JPG",
+  "SWC TOUR (WELLINGTON) - 2.JPG",
+  "SWC X MG (TOUR)-1.JPG",
+  "SWC X MG (TOUR)-5.JPG",
+  "SWC X MG (TOUR)-6.JPG",
+  "SWC X MG (TOUR)-7.JPG",
+  "TOGOEDIT(INSTA)-2.JPG",
+  "TOGOGARBAGE.JPG",
+  "WAX MUSTANG (FLUX 2ND JUNE) FINAL.PNG",
+  "WAX MUSTANG TOUR POSTER (1).JPG",
+  "WHITE POSTER (2).JPG"
+];
+
+// Calculate spread count based on available images (each spread has 2 pages)
+const SPREAD_COUNT = Math.ceil(DESIGN_IMAGES.length / 2);
 const TURN_DURATION = 1100; // ms - increased for smoother animation
 const TOTAL_PAGES = SPREAD_COUNT * 2;
 const BASE_STACK_PAGES = 0; // No permanent pages - all pages can be turned
@@ -12,9 +170,22 @@ const VISIBLE_STACK_LAYERS = 50; // Match the actual page count for realism
 const CLOSED_STACK_LAYERS = VISIBLE_STACK_LAYERS;
 
 function PageSketch({ pageNumber }: { pageNumber: number }) {
-  // Page 0 is the cover - simple orange page
+  // Page 0 is the cover - use the first image as cover
   if (pageNumber === 0) {
-    return <div className="page-cover-simple" />;
+    return (
+      <div className="page-cover-simple">
+        <div className="page-image-container">
+          <Image
+            src={`/DESIGN ARCHIVE FOR WEBSITE-20251126T045719Z-1-001/${DESIGN_IMAGES[0]}`}
+            alt="Book Cover"
+            fill
+            style={{ objectFit: "contain" }}
+            sizes="(max-width: 768px) 100vw, 50vw"
+            priority
+          />
+        </div>
+      </div>
+    );
   }
 
   // Negative page numbers represent the back of the cover (blank)
@@ -23,8 +194,31 @@ function PageSketch({ pageNumber }: { pageNumber: number }) {
   }
 
   // Regular pages start from 1
+  // Map page number to image index (page 1 = image index 0 or 1 depending on if we used one for cover)
+  const imageIndex = pageNumber; // Since we use image 0 for cover, page 1 gets image 1, etc.
+
+  // Check if we have an image for this page
+  if (imageIndex < DESIGN_IMAGES.length) {
+    return (
+      <div className="page-sketch">
+        <div className="page-image-container">
+          <Image
+            src={`/DESIGN ARCHIVE FOR WEBSITE-20251126T045719Z-1-001/${DESIGN_IMAGES[imageIndex]}`}
+            alt={`Page ${pageNumber}`}
+            fill
+            style={{ objectFit: "contain" }}
+            sizes="(max-width: 768px) 100vw, 50vw"
+          />
+        </div>
+        <div className="page-number">{pageNumber}</div>
+      </div>
+    );
+  }
+
+  // If we run out of images, show a blank page
   return (
     <div className="page-sketch">
+      <div className="page-blank" />
       <div className="page-number">{pageNumber}</div>
     </div>
   );
