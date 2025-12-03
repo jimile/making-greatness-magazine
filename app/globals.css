@@ -149,7 +149,7 @@ body {
   background: linear-gradient(180deg, var(--page-cream) 0%, #f4eedf 100%);
   border: 1px solid rgba(22, 22, 22, 0.15);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
-  overflow: hidden;
+  overflow: visible; /* Allow page numbers to extend outside */
   contain: layout;
 }
 
@@ -432,7 +432,7 @@ body {
   position: relative;
   width: 100%;
   height: 100%;
-  overflow: hidden;
+  overflow: visible; /* Allow page numbers to extend outside */
 }
 
 /* Container for page images */
@@ -473,15 +473,28 @@ body {
 .page-number {
   position: absolute;
   bottom: 12px;
-  right: 12px;
+  left: 12px;
   font-size: 0.76rem;
   letter-spacing: 0.08em;
   color: rgba(22, 22, 22, 0.85);
-  background: rgba(255, 255, 255, 0.8);
-  padding: 4px 8px;
-  border-radius: 4px;
-  backdrop-filter: blur(4px);
+  background: none !important;
+  background-color: transparent !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  backdrop-filter: none !important;
+  border: none !important;
   z-index: 10;
+}
+
+/* Specific positioning for left and right pages */
+.page-left .page-number {
+  left: 12px;
+}
+
+/* For right page numbers, position them at the far right edge */
+.page-right .page-number {
+  left: auto;
+  right: 12px; /* Position at the right edge of the page */
 }
 
 /* Blank page (back of cover) */

@@ -179,7 +179,7 @@ function PageSketch({ pageNumber }: { pageNumber: number }) {
             src={`/DESIGN ARCHIVE FOR WEBSITE-20251126T045719Z-1-001/${DESIGN_IMAGES[0]}`}
             alt="Book Cover"
             fill
-            style={{ objectFit: "cover" }}
+            style={{ objectFit: "contain" }}
             sizes="(max-width: 768px) 100vw, 50vw"
             priority
           />
@@ -206,7 +206,7 @@ function PageSketch({ pageNumber }: { pageNumber: number }) {
             src={`/DESIGN ARCHIVE FOR WEBSITE-20251126T045719Z-1-001/${DESIGN_IMAGES[imageIndex]}`}
             alt={`Page ${pageNumber}`}
             fill
-            style={{ objectFit: "cover" }}
+            style={{ objectFit: "contain" }}
             sizes="(max-width: 768px) 100vw, 50vw"
           />
         </div>
