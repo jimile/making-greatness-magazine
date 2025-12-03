@@ -19,6 +19,9 @@
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    --cover-orange: #f3a126;
+    --cover-stroke: #161616;
+    --page-cream: #fffdf7;
   }
 }
 
@@ -278,170 +281,7 @@ body {
   right: 0; /* Reset to 0 relative to container */
 }
 
-@keyframes cover-open {
-  0% {
-    transform: perspective(2000px) rotateY(0deg) translateZ(0px) translateX(0px);
-    filter: drop-shadow(2px 4px 8px rgba(0, 0, 0, 0.15));
-  }
-  10% {
-    transform: perspective(2000px) rotateY(-15deg) translateZ(8px) translateX(-2px);
-    filter: drop-shadow(3px 6px 10px rgba(0, 0, 0, 0.16));
-  }
-  20% {
-    transform: perspective(2000px) rotateY(-32deg) translateZ(20px) translateX(-5px);
-    filter: drop-shadow(5px 10px 16px rgba(0, 0, 0, 0.18));
-  }
-  30% {
-    transform: perspective(2000px) rotateY(-50deg) translateZ(35px) translateX(-8px);
-    filter: drop-shadow(8px 14px 22px rgba(0, 0, 0, 0.22));
-  }
-  40% {
-    transform: perspective(2000px) rotateY(-70deg) translateZ(48px) translateX(-10px);
-    filter: drop-shadow(10px 18px 28px rgba(0, 0, 0, 0.26));
-  }
-  50% {
-    transform: perspective(2000px) rotateY(-90deg) translateZ(52px) translateX(-12px);
-    filter: drop-shadow(12px 20px 32px rgba(0, 0, 0, 0.3));
-  }
-  60% {
-    transform: perspective(2000px) rotateY(-110deg) translateZ(48px) translateX(-10px);
-    filter: drop-shadow(10px 18px 28px rgba(0, 0, 0, 0.26));
-  }
-  70% {
-    transform: perspective(2000px) rotateY(-130deg) translateZ(35px) translateX(-8px);
-    filter: drop-shadow(8px 14px 22px rgba(0, 0, 0, 0.22));
-  }
-  80% {
-    transform: perspective(2000px) rotateY(-148deg) translateZ(20px) translateX(-5px);
-    filter: drop-shadow(5px 10px 16px rgba(0, 0, 0, 0.18));
-  }
-  90% {
-    transform: perspective(2000px) rotateY(-165deg) translateZ(8px) translateX(-2px);
-    filter: drop-shadow(3px 6px 10px rgba(0, 0, 0, 0.16));
-  }
-  100% {
-    transform: perspective(2000px) rotateY(-180deg) translateZ(0px) translateX(0px);
-    filter: drop-shadow(0px 2px 6px rgba(0, 0, 0, 0.15));
-  }
-}
-
-.book-cover {
-  position: absolute;
-  /* Cover only right page (single page size) */
-  top: 0;
-  bottom: 0;
-  left: 50%;
-  right: 0;
-  background: var(--cover-orange);
-  border: 2px solid var(--cover-stroke);
-  display: flex;
-  align-items: stretch;
-  justify-content: center;
-  padding: 26px 26px 22px;
-  border-radius: 3px;
-  box-shadow:
-    0 0 0 2px var(--cover-stroke),
-    0 14px 32px -14px rgba(0, 0, 0, 0.5);
-  transform-origin: 0% center; /* Changed origin to left edge of cover */
-  transform: rotateY(0deg) translateZ(6px);
-  transition: box-shadow 900ms;
-  cursor: pointer;
-  z-index: 8;
-  overflow: visible;
-}
-
-/* Book binding/spine on cover */
-.book-cover::before {
-  content: "";
-  position: absolute;
-  left: -2px;
-  top: -2px;
-  bottom: -2px;
-  width: 18px;
-  background: linear-gradient(90deg, rgba(0, 0, 0, 0.24), rgba(0, 0, 0, 0.02));
-  border-right: 2px solid var(--cover-stroke);
-  box-shadow: inset 2px 0 4px rgba(0, 0, 0, 0.28);
-}
-
-.book-viewport[data-open="true"] .book-cover {
-  animation: cover-open var(--turn-duration, 900ms) cubic-bezier(0.45, 0.05, 0.35, 1) forwards;
-  box-shadow: 0 28px 60px -40px rgba(0, 0, 0, 0.45);
-  pointer-events: none;
-}
-
-.cover-layout {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 20px;
-  color: #ffffff;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), transparent 55%);
-}
-
-.cover-top {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  align-items: flex-start;
-}
-
-.cover-image-card {
-  width: 100%;
-  aspect-ratio: 5 / 3;
-  background: linear-gradient(120deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.1));
-  border: 2px solid #ffffff;
-  border-radius: 3px;
-  position: relative;
-  overflow: hidden;
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.18);
-}
-
-.cover-heat-blob {
-  position: absolute;
-  inset: 10%;
-  background: radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0));
-  filter: blur(0.4px);
-}
-
-.cover-heat-outline {
-  position: absolute;
-  inset: 18%;
-  border: 2px solid rgba(255, 255, 255, 0.75);
-  border-radius: 6px;
-  transform: rotate(-3deg);
-  mix-blend-mode: screen;
-}
-
-.cover-author {
-  font-size: 0.85rem;
-  letter-spacing: 0.02em;
-  color: rgba(255, 255, 255, 0.92);
-}
-
-.cover-title-block {
-  margin-top: 6px;
-}
-
-.cover-title {
-  display: block;
-  font-size: clamp(1.8rem, 3vw, 2.4rem);
-  line-height: 1.05;
-  letter-spacing: 0.05em;
-  color: #ffffff;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.cover-footer {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 0.75rem;
-  letter-spacing: 0.08em;
-  color: rgba(255, 255, 255, 0.92);
-}
+/* Removed old unused cover animations and styles */
 
 .page-turner {
   position: absolute;
@@ -799,6 +639,79 @@ body {
   font-size: 0.76rem;
   letter-spacing: 0.08em;
   color: rgba(22, 22, 22, 0.55);
+}
+
+/* Blank page (back of cover) */
+.page-blank {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(180deg, var(--page-cream) 0%, #f4eedf 100%);
+}
+
+/* Simple orange cover page */
+.page-cover-simple {
+  width: 100%;
+  height: 100%;
+  background: var(--cover-orange);
+}
+
+/* Closed book cover styles */
+.book-cover-closed {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  right: 0;
+  background-color: #f3a126;  /* Orange color directly */
+  background-color: var(--cover-orange);  /* With variable */
+  border: 2px solid var(--cover-stroke);
+  border-radius: 3px;
+  box-shadow:
+    0 0 0 2px var(--cover-stroke),
+    0 14px 32px -14px rgba(0, 0, 0, 0.5);
+  z-index: 200;  /* Higher z-index to ensure it's on top */
+  overflow: hidden;
+}
+
+/* Book binding/spine on closed cover */
+.book-cover-closed::before {
+  content: "";
+  position: absolute;
+  left: -2px;
+  top: -2px;
+  bottom: -2px;
+  width: 18px;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.24), rgba(0, 0, 0, 0.02));
+  border-right: 2px solid var(--cover-stroke);
+  box-shadow: inset 2px 0 4px rgba(0, 0, 0, 0.28);
+}
+
+/* Special styling for cover opening animation */
+.page-turner.cover-opening {
+  transform-origin: 0% 50%;
+}
+
+.page-turner.cover-opening .page-turner-front {
+  /* Orange cover is handled by .page-cover-simple */
+  border-color: var(--cover-stroke);
+  box-shadow:
+    0 0 0 2px var(--cover-stroke),
+    2px 0 6px rgba(0, 0, 0, 0.2);
+}
+
+/* Special styling for cover closing animation */
+.page-turner.cover-closing {
+  left: 0;
+  right: 50%;
+  transform-origin: 100% 50%;
+}
+
+.page-turner.cover-closing .page-turner-back {
+  /* Orange cover is handled by .page-cover-simple when closing */
+  border-color: var(--cover-stroke);
+  box-shadow:
+    0 0 0 2px var(--cover-stroke),
+    -2px 0 6px rgba(0, 0, 0, 0.2);
 }
 
 /* Page edges styles */
