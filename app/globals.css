@@ -1010,13 +1010,14 @@ body {
   left: 2px;
   width: 0.625rem;
   height: 0.625rem;
-  background: var(--foreground);
+  background: #000;
   border-radius: 50%;
-  transition: transform 0.2s ease;
+  transition: transform 0.2s ease, background 0.2s ease;
 }
 
 .dark .theme-toggle-thumb {
   transform: translateX(0.875rem);
+  background: #fff;
 }
 
 /* Touch and interaction optimizations */
