@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useSyncExternalStore } from "react";
 import Image from "next/image";
 
 type TurnDirection = "next" | "prev";
@@ -277,32 +277,42 @@ export function Book() {
   const [turning, setTurning] = useState<TurnDirection | null>(null);
   const [turnKey, setTurnKey] = useState(0);
 
-  // Theme state - initialize from localStorage
-  const [isDark, setIsDark] = useState(() => {
-    if (typeof window !== 'undefined') {
+  // Theme state using useSyncExternalStore for hydration-safe localStorage access
+  const isDark = useSyncExternalStore(
+    // Subscribe function
+    (callback) => {
+      window.addEventListener('storage', callback);
+      return () => window.removeEventListener('storage', callback);
+    },
+    // Client snapshot
+    () => {
       const saved = localStorage.getItem('theme');
-      return saved ? saved === 'dark' : true; // default dark
-    }
-    return true;
-  });
+      return saved ? saved === 'dark' : true;
+    },
+    // Server snapshot - always return default to match initial client render
+    () => true
+  );
+
+  const setIsDark = useCallback((value: boolean | ((prev: boolean) => boolean)) => {
+    const newValue = typeof value === 'function' ? value(localStorage.getItem('theme') === 'dark') : value;
+    localStorage.setItem('theme', newValue ? 'dark' : 'light');
+    // Trigger storage event for useSyncExternalStore
+    window.dispatchEvent(new Event('storage'));
+  }, []);
 
   // Touch/swipe state
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
   const bookViewportRef = useRef<HTMLDivElement>(null);
 
-  // Theme effect - sync document class with state
+  // Sync theme class with document
   useEffect(() => {
     document.documentElement.classList.toggle('dark', isDark);
   }, [isDark]);
 
   const toggleTheme = useCallback(() => {
-    setIsDark(prev => {
-      const newTheme = !prev;
-      localStorage.setItem('theme', newTheme ? 'dark' : 'light');
-      return newTheme;
-    });
-  }, []);
+    setIsDark(prev => !prev);
+  }, [setIsDark]);
 
   // Book is open when spreadIndex is 0 or greater
   const isOpen = spreadIndex >= 0;
@@ -616,7 +626,6 @@ export function Book() {
         className="theme-toggle"
         aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
       >
-        <span>{isDark ? '☀️' : '🌙'}</span>
         <div className="theme-toggle-track">
           <div className="theme-toggle-thumb" />
         </div>
