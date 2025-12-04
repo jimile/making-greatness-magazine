@@ -276,11 +276,33 @@ export function Book() {
   const [spreadIndex, setSpreadIndex] = useState(-1);
   const [turning, setTurning] = useState<TurnDirection | null>(null);
   const [turnKey, setTurnKey] = useState(0);
-  
+
+  // Theme state - initialize from localStorage
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('theme');
+      return saved ? saved === 'dark' : true; // default dark
+    }
+    return true;
+  });
+
   // Touch/swipe state
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
   const bookViewportRef = useRef<HTMLDivElement>(null);
+
+  // Theme effect - sync document class with state
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', isDark);
+  }, [isDark]);
+
+  const toggleTheme = useCallback(() => {
+    setIsDark(prev => {
+      const newTheme = !prev;
+      localStorage.setItem('theme', newTheme ? 'dark' : 'light');
+      return newTheme;
+    });
+  }, []);
 
   // Book is open when spreadIndex is 0 or greater
   const isOpen = spreadIndex >= 0;
@@ -301,7 +323,7 @@ export function Book() {
   const canPrev = spreadIndex >= 0 && !turning;
 
   // Page numbering:
-  // When spreadIndex = -1: book is closed (shows orange cover)
+  // When spreadIndex = -1: book is closed (shows grey cover)
   // When spreadIndex = 0: left page = 1, right page = 2 (first content pages)
   // When spreadIndex = 1: left page = 3, right page = 4, etc.
   const leftPageNumber = spreadIndex < 0 ? -1 : (spreadIndex * 2) + 1;
@@ -524,7 +546,7 @@ export function Book() {
             <div className="book-bottom-crease" />
           </div>
 
-          {/* Show closed book with orange cover as the front page */}
+          {/* Show closed book with grey cover as the front page */}
           {!isOpen && (
             <>
               {renderClosedPages(VISIBLE_STACK_LAYERS, 'right')}
@@ -586,6 +608,19 @@ export function Book() {
           Next →
         </button>
       </div>
+
+      {/* Theme toggle - fixed bottom right */}
+      <button
+        type="button"
+        onClick={toggleTheme}
+        className="theme-toggle"
+        aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+      >
+        <span>{isDark ? '☀️' : '🌙'}</span>
+        <div className="theme-toggle-track">
+          <div className="theme-toggle-thumb" />
+        </div>
+      </button>
     </div>
   );
 }
