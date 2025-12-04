@@ -881,7 +881,7 @@ body {
   .book-viewport {
     width: min(100%, 100%);
     aspect-ratio: 2 / 1.4;
-    perspective: 1500px;
+    /* Use same perspective as desktop for consistent animation */
   }
 
   .book-controls {
@@ -929,20 +929,13 @@ body {
     -webkit-transform-style: preserve-3d;
     transform-style: preserve-3d;
     will-change: transform;
-    /* Simplified shadows for mobile performance */
-    box-shadow: -1px 0 4px rgba(0, 0, 0, 0.1);
+    /* Use same shadows as desktop for consistent look */
   }
 
   .page-turner.turn-next,
   .page-turner.turn-prev {
-    /* Smooth natural easing with optimal mobile duration */
+    /* Use same easing as desktop - duration inherited (600ms) */
     animation-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
-    animation-duration: 450ms;
-  }
-
-  /* Disable expensive spine shadow on mobile */
-  .page-turner::before {
-    display: none;
   }
 
   .book-frame {
@@ -955,7 +948,7 @@ body {
 @media (max-width: 480px) {
   .book-viewport {
     aspect-ratio: 3 / 2;
-    perspective: 1200px;
+    /* Use same perspective as desktop for consistent animation */
   }
 
   .book-controls {
@@ -974,18 +967,7 @@ body {
     margin-top: 4px;
   }
 
-  /* Optimized animation for small screens */
-  .page-turner.turn-next,
-  .page-turner.turn-prev {
-    animation-duration: 400ms;
-    animation-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
-  }
-
-  /* Further reduce shadow complexity on small screens */
-  .page-turner-front,
-  .page-turner-back {
-    box-shadow: 0 0 3px rgba(0, 0, 0, 0.08);
-  }
+  /* Animation matches desktop - no duration/shadow overrides */
 }
 
 /* Theme toggle - fixed bottom right */
