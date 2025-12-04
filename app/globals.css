@@ -855,6 +855,23 @@ body {
 
 /* Mobile responsive styles */
 @media (max-width: 768px) {
+  .header-bar {
+    padding: 1rem;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .header-title {
+    font-size: 1.5rem;
+    transform: scaleY(1.3);
+  }
+
+  .header-email {
+    font-size: 0.75rem;
+    transform: scaleY(1.3);
+    transform-origin: top left;
+  }
+
   .book-shell {
     padding: 12px;
     gap: 12px;
