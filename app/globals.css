@@ -1,9 +1,9 @@
 @import "tailwindcss";
 
 :root {
-  --background: #d7d7da;
+  --background: #000000;
   --foreground: #171717;
-  --cover-orange: #f3a126;
+  --cover-orange: #808080;
   --cover-stroke: #161616;
   --page-cream: #fffdf7;
 }
@@ -46,7 +46,7 @@ body {
 /* Controls below the book */
 .book-controls {
   width: min(100%, 980px);
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   gap: 24px;
@@ -114,8 +114,8 @@ body {
 
 .book-viewport {
   position: relative;
-  width: min(100%, 980px);
-  aspect-ratio: 3 / 2;
+  width: min(100%, 800px);
+  aspect-ratio: 2 / 1.4;
   perspective: 2500px;
   perspective-origin: 50% 50%;
   overflow: visible;
@@ -589,18 +589,6 @@ body {
   overflow: hidden;
 }
 
-/* Book binding/spine on closed cover */
-.book-cover-closed::before {
-  content: "";
-  position: absolute;
-  left: -2px;
-  top: -2px;
-  bottom: -2px;
-  width: 18px;
-  background: linear-gradient(90deg, rgba(0, 0, 0, 0.24), rgba(0, 0, 0, 0.02));
-  border-right: 2px solid var(--cover-stroke);
-  box-shadow: inset 2px 0 4px rgba(0, 0, 0, 0.28);
-}
 
 /* Special styling for cover opening animation - starts from full width when centered closed */
 .page-turner.cover-opening {
@@ -790,74 +778,99 @@ body {
   .book-shell {
     padding: 12px;
     gap: 12px;
+    max-width: 100%;
   }
-  
+
   .book-viewport {
-    width: 100%;
-    aspect-ratio: 4 / 3;
+    width: min(100%, 100%);
+    aspect-ratio: 2 / 1.4;
+    perspective: 1500px;
   }
-  
+
   .book-controls {
-    width: 100%;
+    width: min(100%, 900px);
     gap: 12px;
     padding: 12px 0;
     flex-wrap: wrap;
   }
-  
+
   .ghost-btn {
     padding: 10px 16px;
     font-size: 0.9rem;
   }
-  
+
   .page-indicator {
     font-size: 0.85rem;
     min-width: 100px;
+    min-height: 1.5em;
   }
-  
+
   .page-number {
     font-size: 0.65rem;
     bottom: 8px;
     left: 8px;
   }
-  
+
   .page-right .page-number {
     right: 8px;
     left: auto;
   }
-  
-  /* Make closed book more touch-friendly */
-  .book-cover-closed::after {
-    content: "Tap to Open";
-    position: absolute;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 0.9rem;
-    color: rgba(0, 0, 0, 0.6);
-    font-weight: 500;
-    white-space: nowrap;
+
+  /* Improved page turn animation for mobile */
+  .page-turner {
+    -webkit-transform-style: preserve-3d;
+    transform-style: preserve-3d;
   }
+
+  .page-turner-front,
+  .page-turner-back {
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    -webkit-transform-style: preserve-3d;
+    transform-style: preserve-3d;
+  }
+
+  .page-turner.turn-next {
+    animation: page-turn-next var(--turn-duration, 500ms) cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  .page-turner.turn-prev {
+    animation: page-turn-prev var(--turn-duration, 500ms) cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  .book-frame {
+    -webkit-transform-style: preserve-3d;
+    transform-style: preserve-3d;
+  }
+
 }
 
 @media (max-width: 480px) {
   .book-viewport {
-    aspect-ratio: 1 / 1;
+    aspect-ratio: 3 / 2;
+    perspective: 1200px;
   }
-  
+
   .book-controls {
     gap: 8px;
   }
-  
+
   .ghost-btn {
     padding: 8px 12px;
     font-size: 0.85rem;
   }
-  
+
   .page-indicator {
     font-size: 0.8rem;
     order: 3;
     width: 100%;
     margin-top: 4px;
+  }
+
+  /* Faster animation on small screens */
+  .page-turner.turn-next,
+  .page-turner.turn-prev {
+    animation-duration: 400ms;
   }
 }
 

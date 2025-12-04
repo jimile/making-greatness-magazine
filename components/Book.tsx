@@ -558,7 +558,7 @@ export function Book() {
           ← Prev
         </button>
         <div className="page-indicator">
-          {isOpen ? `${Math.max(1, spreadIndex * 2 + 1)}-${Math.min(TOTAL_PAGES, spreadIndex * 2 + 2)} / ${TOTAL_PAGES}` : 'Tap to open'}
+          {isOpen ? `${Math.max(1, spreadIndex * 2 + 1)}-${Math.min(TOTAL_PAGES, spreadIndex * 2 + 2)} / ${TOTAL_PAGES}` : ''}
         </div>
         <button
           className="ghost-btn"
