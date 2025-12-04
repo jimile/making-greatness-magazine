@@ -335,18 +335,20 @@ export function Book() {
     setTurning(dir);
     setTurnKey((k) => k + 1);
 
-    // Update everything after animation completes
+    // Update state after animation completes, aligned with render cycle
     setTimeout(() => {
-      setSpreadIndex((idx) => {
-        if (dir === "next") {
-          // Moving forward: from -1 (closed) to 0 (cover open), or to next spreads
-          return Math.min(idx + 1, totalSpreads - 1);
-        } else {
-          // Moving backward: can go back to -1 (close the book)
-          return Math.max(idx - 1, -1);
-        }
+      requestAnimationFrame(() => {
+        setSpreadIndex((idx) => {
+          if (dir === "next") {
+            // Moving forward: from -1 (closed) to 0 (cover open), or to next spreads
+            return Math.min(idx + 1, totalSpreads - 1);
+          } else {
+            // Moving backward: can go back to -1 (close the book)
+            return Math.max(idx - 1, -1);
+          }
+        });
+        setTurning(null);
       });
-      setTurning(null);
     }, TURN_DURATION);
   }, [turning, canNext, canPrev, totalSpreads]);
 
@@ -367,14 +369,27 @@ export function Book() {
     touchStartY.current = e.touches[0].clientY;
   }, []);
 
+  // Prevent scroll conflicts during horizontal swipe
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (touchStartX.current === null || touchStartY.current === null) return;
+
+    const deltaX = e.touches[0].clientX - touchStartX.current;
+    const deltaY = e.touches[0].clientY - touchStartY.current;
+
+    // If horizontal swipe detected, prevent scroll to avoid conflicts
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
+      e.preventDefault();
+    }
+  }, []);
+
   const handleTouchEnd = useCallback((e: React.TouchEvent) => {
     if (touchStartX.current === null || touchStartY.current === null) return;
-    
+
     const touchEndX = e.changedTouches[0].clientX;
     const touchEndY = e.changedTouches[0].clientY;
     const deltaX = touchEndX - touchStartX.current;
     const deltaY = touchEndY - touchStartY.current;
-    
+
     // Only trigger swipe if horizontal movement is greater than vertical
     // and the swipe is at least 50px
     const minSwipeDistance = 50;
@@ -387,7 +402,7 @@ export function Book() {
         queueTurn('prev');
       }
     }
-    
+
     touchStartX.current = null;
     touchStartY.current = null;
   }, [canNext, canPrev, queueTurn]);
@@ -443,6 +458,7 @@ export function Book() {
         data-open={isOpen}
         ref={bookViewportRef}
         onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onClick={!isOpen ? handleClosedBookClick : undefined}
       >

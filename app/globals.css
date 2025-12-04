@@ -123,6 +123,9 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
+  /* Prevent layout thrashing during animations (no paint - preserves 3D overflow) */
+  contain: layout style;
+  isolation: isolate;
 }
 
 .book-viewport:not([data-open="true"]) {
@@ -153,6 +156,8 @@ body {
   /* Keep the book frame fixed in place */
   will-change: auto;
   transform: translateZ(0);
+  /* Prevent layout shifts affecting children */
+  contain: layout style;
 }
 
 .book-interior {
@@ -359,12 +364,17 @@ body {
   -webkit-transform-style: preserve-3d;
   pointer-events: none;
   z-index: 100;
+  /* GPU compositing for seamless animation */
+  will-change: transform;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  contain: layout style;
 }
 
 .page-turner.turn-next {
   /* Rotate from the left edge (spine) */
   transform-origin: 0% 50%;
-  animation: page-turn-next var(--turn-duration, 600ms) cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation: page-turn-next var(--turn-duration, 600ms) cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
 }
 
 .page-turner.turn-prev {
@@ -372,7 +382,7 @@ body {
   right: 50%;
   /* Rotate from the right edge (spine) */
   transform-origin: 100% 50%;
-  animation: page-turn-prev var(--turn-duration, 600ms) cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation: page-turn-prev var(--turn-duration, 600ms) cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
 }
 
 /* Both faces share these base styles */
@@ -383,12 +393,16 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
   background: linear-gradient(180deg, var(--page-cream) 0%, #f4eedf 100%);
   border: 1px solid rgba(22, 22, 22, 0.18);
   overflow: hidden;
   transform-style: preserve-3d;
+  /* GPU compositing for seamless animation */
+  will-change: transform;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
 
 /* Front face - faces the viewer initially */
@@ -467,22 +481,28 @@ body {
   }
 }
 
-/* Page turns from spine - pure rotation, no floating */
+/* Page turns from spine - enhanced 3D with subtle depth arc */
 @keyframes page-turn-next {
   0% {
-    transform: rotateY(0deg);
+    transform: perspective(2000px) rotateY(0deg) translateZ(0);
+  }
+  50% {
+    transform: perspective(2000px) rotateY(-90deg) translateZ(40px);
   }
   100% {
-    transform: rotateY(-180deg);
+    transform: perspective(2000px) rotateY(-180deg) translateZ(0);
   }
 }
 
 @keyframes page-turn-prev {
   0% {
-    transform: rotateY(0deg);
+    transform: perspective(2000px) rotateY(0deg) translateZ(0);
+  }
+  50% {
+    transform: perspective(2000px) rotateY(90deg) translateZ(40px);
   }
   100% {
-    transform: rotateY(180deg);
+    transform: perspective(2000px) rotateY(180deg) translateZ(0);
   }
 }
 
@@ -816,10 +836,13 @@ body {
     left: auto;
   }
 
-  /* Improved page turn animation for mobile */
+  /* Seamless page turn animation for mobile */
   .page-turner {
     -webkit-transform-style: preserve-3d;
     transform-style: preserve-3d;
+    will-change: transform;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
   }
 
   .page-turner-front,
@@ -828,14 +851,21 @@ body {
     backface-visibility: hidden;
     -webkit-transform-style: preserve-3d;
     transform-style: preserve-3d;
+    will-change: transform;
+    /* Simplified shadows for mobile performance */
+    box-shadow: -1px 0 4px rgba(0, 0, 0, 0.1);
   }
 
-  .page-turner.turn-next {
-    animation: page-turn-next var(--turn-duration, 500ms) cubic-bezier(0.4, 0, 0.2, 1) forwards;
-  }
-
+  .page-turner.turn-next,
   .page-turner.turn-prev {
-    animation: page-turn-prev var(--turn-duration, 500ms) cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    /* Smooth natural easing with optimal mobile duration */
+    animation-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
+    animation-duration: 450ms;
+  }
+
+  /* Disable expensive spine shadow on mobile */
+  .page-turner::before {
+    display: none;
   }
 
   .book-frame {
@@ -867,17 +897,25 @@ body {
     margin-top: 4px;
   }
 
-  /* Faster animation on small screens */
+  /* Optimized animation for small screens */
   .page-turner.turn-next,
   .page-turner.turn-prev {
     animation-duration: 400ms;
+    animation-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
+  }
+
+  /* Further reduce shadow complexity on small screens */
+  .page-turner-front,
+  .page-turner-back {
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.08);
   }
 }
 
-/* Prevent text selection during swipe */
+/* Touch and interaction optimizations */
 .book-viewport {
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
   touch-action: pan-y pinch-zoom;
+  -webkit-tap-highlight-color: transparent;
 }
